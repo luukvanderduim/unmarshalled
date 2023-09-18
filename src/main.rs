@@ -122,31 +122,26 @@ async fn main() -> Result<()> {
                         .await
                         .unwrap_or("Failed to retrieve bus application name.".to_string());
 
+                    println!("  Application name: \"{app_name}\"");
+
                     let role_str = accessible_proxy
                         .get_role_name()
                         .await
                         .unwrap_or("Failed to retrieve role name".to_string());
 
-                    if let Ok(app_accessible) = accessible_proxy.get_application().await {
-                        let atspi::Accessible { name, path: _ } = app_accessible;
+                    let application_proxy: ApplicationProxy = ProxyBuilder::new(conn)
+                        .interface(APPLICATION_INTERFACE)?
+                        .path(ACCESSIBLE_ROOT_PATH)?
+                        .destination(sender_str)?
+                        .build()
+                        .await?;
 
-                        let application_proxy: ApplicationProxy = ProxyBuilder::new(conn)
-                            .interface(APPLICATION_INTERFACE)?
-                            .path(ACCESSIBLE_ROOT_PATH)?
-                            .destination(name)?
-                            .build()
-                            .await?;
+                    let toolkit_name = application_proxy
+                        .toolkit_name()
+                        .await
+                        .unwrap_or("Failed to retrieve toolkit name".to_string());
 
-                        let toolkit_name = application_proxy
-                            .toolkit_name()
-                            .await
-                            .unwrap_or("Failed to retrieve toolkit name".to_string());
-
-                        println!("  Toolkit name: {toolkit_name}");
-                    }
-
-                    println!("  Application name: \"{app_name}\"");
-                    println!("  Object role: \"{role_str}\"");
+                    println!("  Toolkit name:      {toolkit_name}");
                 }
             }
 
